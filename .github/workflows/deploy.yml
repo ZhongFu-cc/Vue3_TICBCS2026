@@ -47,7 +47,7 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
           path: "dist/"
-          remote_path: /home/user/front-end/backend
+          remote_path: /home/user/front-end/backstage
           debug: true
           switches: "-avz --delete"
 
@@ -59,7 +59,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo cp -r /home/user/front-end/backend/* /usr/share/nginx/html
+            sudo cp -r /home/user/front-end/backstage/* /usr/share/nginx/html
         
   
     
