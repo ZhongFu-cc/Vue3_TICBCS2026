@@ -3,11 +3,11 @@
     <transition enter-active-class="animate__animated animate__fadeInLeft">
       <router-link v-if="collapse" class="wh-full flex-center" to="/">
         <!-- :src="logo" -->
-        <img v-if="settingsStore.sidebarLogo" src="@/assets/images/logo.png" class="logo-image" />
+        <img v-if="settingsStore.sidebarLogo" src="@/assets/images/logo01.png" class="logo-image" />
       </router-link>
 
       <router-link v-else class="wh-full flex-center" to="/">
-        <img v-if="settingsStore.sidebarLogo" src="@/assets/images/logo.png" class="logo-image" />
+        <img v-if="settingsStore.sidebarLogo" src="@/assets/images/logo01.png" class="logo-image" />
         <span class="logo-title"> {{ defaultSettings.title }}</span>
       </router-link>
     </transition>

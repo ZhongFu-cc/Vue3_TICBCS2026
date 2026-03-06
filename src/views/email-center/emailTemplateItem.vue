@@ -58,18 +58,13 @@ const getDataAndEditorLoaded = async () => {
   let objDesign = null;
   if (res.data.design != null) {
     objDesign = JSON.parse(res.data.design)
-    console.log(res.data)
     res.data.design = objDesign
   }
 
   Object.assign(emailTemplate, res.data)
-  console.log("獲取模板數據 ", emailTemplate)
-  console.log("這是emailEditor", emailEditor.value)
 
   if (objDesign == null) {
-    console.log("沒有design數據")
   } else {
-    console.log("有design數據,進行載入")
     emailEditor.value.editor.loadDesign(objDesign)
   }
 
@@ -83,25 +78,118 @@ const getDataAndEditorLoaded = async () => {
 
 
   // emailEditor.value.editor.registerCallback('image', function (file: any, done: any) {
-  //   console.log('file為', file)
-  //   console.log('done', done)
   //   done({ progress: 100, url: "https://png.pngtree.com/png-clipart/20230108/original/pngtree-super-cute-cartoon-vector-bear-png-image_8887896.png" })
   //   // Handle file upload here
   // })
 
   let mergeTags = {}
   switch (emailTemplate.category) {
-    case 'attendees':
-
+    case 'poster':
       mergeTags = {
+        absType: {
+          name: '稿件類型',
+          value: '{{absType}}',
+        },
+        absProp: {
+          name: '文章性質',
+          value: '{{absProp}}',
+        },
+        absTitle: {
+          name: '文章標題',
+          value: '{{absTitle}}',
+        },
+        absAuthor: {
+          name: '第一作者',
+          value: '{{firstAuthor}}',
+        },
+        speaker: {
+          name: '講者',
+          value: '{{speaker}}',
+        },
+        speakerAffiliation: {
+          name: '講者所屬單位',
+          value: '{{speakerAffiliation}}',
+        },
+        correspondingAuthor: {
+          name: '通訊作者',
+          value: '{{correspondingAuthor}}',
+        },
+        correspondingAuthorEmail: {
+          name: '通訊作者信箱',
+          value: '{{correspondingAuthorEmail}}',
+        },
+        correspondingAuthorAffiliation: {
+          name: '通訊作者所屬單位',
+          value: '{{correspondingAuthorAffiliation}}',
+        },
+      }
+      break;
+    case 'all':
+      mergeTags = {
+        member: {
+          name: '會員頭銜',
+          value: '{{title}}',
+        },
+        firstName: {
+          name: '會員姓名',
+          value: '{{firstName}}',
+        },
+        lastName: {
+          name: '會員姓氏',
+          value: '{{lastName}}',
+        },
+        email: {
+          name: '會員信箱',
+          value: '{{email}}',
+        },
+        phone: {
+          name: '會員電話',
+          value: '{{phone}}',
+        },
+        country: {
+          name: '會員國家',
+          value: '{{country}}',
+        },
+        affliation: {
+          name: '會員所屬單位',
+          value: '{{affiliation}}',
+        },
+        jobTitle: {
+          name: '會員職稱',
+          value: '{{jobTitle}}',
+        },
+        category: {
+          name: '會員類別',
+          value: '{{category}}',
+        },
+      }
+      break;
+    case 'reviewer':
+      mergeTags = {
+        absTypeList: {
+          name: '稿件類型',
+          value: '{{absTypeList}}',
+        },
+        email: {
+          name: '審稿人信箱',
+          value: '{{email}}',
+        },
         name: {
-          name: '姓名',
+          name: '審稿人姓名',
           value: '{{name}}',
         },
-        QRcode: {
-          name: 'QRcode',
-          value: '{{QRcode}}',
+        phone: {
+          name: '審稿人電話',
+          value: '{{phone}}',
         },
+        account: {
+          name: '審稿人帳號',
+          value: '{{account}}',
+        },
+        password: {
+          name: '審稿人密碼',
+          value: '{{password}}',
+        }
       }
 
 
@@ -109,7 +197,6 @@ const getDataAndEditorLoaded = async () => {
 
   //當編輯器載入完成,解鎖save按鈕
   emailEditor.value.editor.addEventListener('editor:ready', function () {
-    console.log('editor:ready')
 
     emailEditor.value.editor.setMergeTags(mergeTags);
 
@@ -155,7 +242,6 @@ const tools = {
 const saveDesign = () => {
   emailEditor.value.editor.saveDesign(
     (design: any) => {
-      console.log('saveDesign', design);
     }
   )
 }
@@ -163,7 +249,6 @@ const saveDesign = () => {
 const exportHtml = () => {
   emailEditor.value.editor.exportHtml(
     (data: any) => {
-      console.log('exportHtml', data);
     }, {
     //壓縮html大小
     minify: true
@@ -172,7 +257,6 @@ const exportHtml = () => {
 
 const exportPlainText = () => {
   emailEditor.value.editor.exportPlainText((data: any) => {
-    console.log('exportHtml', data);
   }, {
     //忽略各種連結和圖片
     ignoreLinks: true,
@@ -212,7 +296,6 @@ const save = async () => {
     return new Promise<void>((resolve, reject) => {
       emailEditor.value.editor.exportHtml(
         (data: any) => {
-          console.log('exportHtml', data);
           jsonDesign = JSON.stringify(data.design);
           htmlContent = data.html;
           resolve(); // 解析 Promise
@@ -232,7 +315,6 @@ const save = async () => {
     return new Promise<void>((resolve, reject) => {
       emailEditor.value.editor.exportPlainText(
         (data: any) => {
-          console.log('exporPlainText', data);
           plainText = data.text
           resolve(); // 解析 Promise
         }, {
@@ -261,7 +343,6 @@ const save = async () => {
   emailTemplate.design = jsonDesign
   emailTemplate.htmlContent = htmlContent
   emailTemplate.plainText = plainText
-  console.log("emailTemplate資料: ", emailTemplate)
 
   await updateEmailTemplateApi(emailTemplate)
 

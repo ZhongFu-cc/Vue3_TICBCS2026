@@ -70,15 +70,28 @@
         <el-input-number :min="1" v-model="noImgArticleFormData.sort" size="small" />
       </el-form-item>
 
+      <el-form-item label="外部連結" :label-width="formLabelWidth">
+        <el-input type="textarea" v-model="noImgArticleFormData.link"></el-input>
+      </el-form-item>
+
       <el-form-item label="檔案上傳" :label-width="formLabelWidth">
-        <el-upload ref="fileComponent" class="thumbnail-uploader" :action="envAPI + '/upload/img'"
-          :show-file-list="true" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload" :limit="1"
-          :on-exceed="handleExceed">
+        <el-upload ref="fileComponent" class="thumbnail-uploader" :auto-upload="false" :show-file-list="true"
+          :before-upload="beforeAvatarUpload" :on-change="handleChange" :limit="1" :on-exceed="handleExceed">
 
           <template #trigger>
             <el-button type="primary">選擇檔案</el-button>
           </template>
 
+        </el-upload>
+      </el-form-item>
+
+      <el-form-item>
+        <el-upload class="avatar-uploader" :action="envAPI + '/upload/img'" :show-file-list="false"
+          :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+          <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon">
+            <Plus />
+          </el-icon>
         </el-upload>
       </el-form-item>
 
@@ -103,6 +116,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { Delete, Plus } from '@element-plus/icons-vue'
 import { type FormInstance, type FormRules, type UploadRawFile, type UploadProps, ElMessageBox, ElMessage, UploadUserFile } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router';
+import { link } from 'fs';
 
 //獲取路由
 const route = useRoute()
@@ -121,14 +135,23 @@ const imageUrl = ref()
 //圖片實際數據
 let imgFile = <UploadRawFile>{}
 
+let realFile = <UploadRawFile>{}
+
+const handleChange: UploadProps['onChange'] = (
+  file: UploadUserFile,
+  fileList: UploadUserFile[],
+) => {
+  //檔案變更的回調
+  realFile = file.raw!
+  //檔案上傳成功後的回調
+}
+
 //檔案上傳成功的回調
 const handleAvatarSuccess: UploadProps['onSuccess'] = (
   response,
   uploadFile,
   uploadFiles
 ) => {
-  // console.log(response)
-  console.log(uploadFile)
   imageUrl.value = URL.createObjectURL(uploadFile.raw!)
   //將檔案傳給接收圖片的數據
   imgFile = uploadFile.raw!
@@ -198,7 +221,6 @@ watch(() => { return props.table }, (newValue, oldValue) => {
 /**--------------顯示數據相關---------------------------- */
 
 //分頁組件， 從查詢參數中獲取初始值从查询参数中獲取初始值
-// console.log(route)
 let currentPage = ref<number>(parseInt(route.query.page as string) || 1);
 
 //獲取的最新檔案List
@@ -212,7 +234,6 @@ const updateURL = (page: number, size: number) => {
 
 //監聽當前頁數的變化,如果有更動就call API 獲取數組數據
 watch(currentPage, (value, oldValue) => {
-  // console.log("當前頁為 ", value)
   let pageSize = ref<number>(parseInt(route.query.size as string) || 10);
   updateURL(value, pageSize.value)
 })
@@ -241,7 +262,6 @@ const deleteRow = (id: number, title: string): void => {
     await props.deleteApi(id)
     ElMessage.success('刪除成功');
   }).catch((err) => {
-    console.log(err)
   });
 }
 
@@ -259,7 +279,6 @@ const deleteList = () => {
       await props.batchDeleteApi(deleteIdList)
       ElMessage.success('刪除成功');
     }).catch((err) => {
-      console.log(err)
     })
 
   } else {
@@ -280,7 +299,8 @@ const noImgArticleFormData = reactive({
   type: '',
   name: '',
   description: null,
-  sort: 500
+  link: '',
+  sort: 500,
 })
 //獲取父組件給的group
 noImgArticleFormData.groupType = props.group
@@ -327,7 +347,7 @@ const toggleAddDialog = () => {
 const submitForm = (form: FormInstance | undefined) => {
 
   //如果沒上傳檔案,直接返回
-  if (Object.keys(imgFile).length === 0) {
+  if (Object.keys(realFile).length === 0) {
     ElMessage.error("請上傳檔案")
     return
   }
@@ -341,7 +361,8 @@ const submitForm = (form: FormInstance | undefined) => {
         // 將響應式對象轉換為普通對象，然後轉換為 JSON 字符串
         const jsonData = JSON.stringify(noImgArticleFormData)
         formData.append('data', jsonData)
-        formData.append('file', imgFile)
+        formData.append('file', realFile)
+        formData.append('imgFile', imgFile)
 
         //呼叫父組件給的新增function API
         await props.addApi(formData)
@@ -350,14 +371,15 @@ const submitForm = (form: FormInstance | undefined) => {
         form.resetFields()
         //重製上傳的檔案
         imgFile = <UploadRawFile>{}
+        realFile = <UploadRawFile>{}
+
+        imageUrl.value = ''
 
         //重置檔案列表
-        console.log(fileComponent.value)
         fileComponent.value.clearFiles()
 
         ElMessage.success('新增成功');
       } catch (err: any) {
-        console.log(err)
       }
       //最終都將這個dialog關掉
       dialogFormVisible.value = false
@@ -398,6 +420,32 @@ const editRow = (id: number): void => {
 
 .thumbnail-uploader {
   width: 100%;
+}
+
+.avatar-uploader {
+  position: relative;
+  width: 40%;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+
+  .avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 }
 
 

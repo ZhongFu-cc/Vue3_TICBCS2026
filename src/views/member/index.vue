@@ -1,26 +1,28 @@
 <!--  -->
 <template>
+  <div class="content">
 
-  <section class="member-section">
-    <el-card class="member-card">
-      <h1>會員管理</h1>
+    <BasicComponent title="會員管理" :totalCount="memberRes.total + '人'">
+      <template v-slot:search-box>
+        <div class="search-box">
+          <el-input v-model="fetchConditions.input" placeholder="輸入內容,Enter查詢"
+            @input="fetchMemberListWithPaginationAndStatus" />
 
-      <!-- 如果要用兩種註冊方式再考慮使用這個 -->
-      <div class="function-bar">
-        <div class="display-count">
-          <div class="total-count">總數量為： {{ memberCount }} 人</div>
-          <div>當前查詢數量為： {{ memberList.total }} 人</div>
+          <el-select v-model="fetchConditions.filterStatus" class="filter-status" placeholder="請選擇">
+            <el-option v-for="status in statusList" :label="status.label" :value="status.value" />
+          </el-select>
         </div>
+      </template>
 
+      <template v-slot:option-box>
         <div class="btn-box">
-
-          <el-button type="primary" @click="toggleAddDialog">
-            新增<el-icon class="el-icon--right">
+          <el-button class="btn-insert" type="primary" @click="insertMemberDialogState.openDialog">
+            新增<el-icon>
               <Plus />
             </el-icon>
           </el-button>
 
-          <el-button type="danger" @click="deleteList" :disabled="deleteSelectList.length > 0 ? false : true">
+          <el-button type="danger" @click="batchDeleteMember" :disabled="deleteButtonIsDisabled">
             刪除<el-icon class="el-icon--right">
               <Delete />
             </el-icon>
@@ -28,394 +30,261 @@
 
           <el-button type="success" @click="downloadExcel">下載Excel</el-button>
         </div>
-      </div>
+      </template>
 
-      <div class="search-bar">
-        <el-input v-model="input" style="width: 240px" placeholder="輸入內容,Enter查詢"
-          @input="getMemberByPagination(currentPage, 10)" />
+      <template v-slot:data-table>
+        <MemberTable :member-data="memberRes.records" view-page="index" @open-tag-dialog="tagDialogState.openDialog"
+          @open-edit-dialog="updateMemberDrawerState.openDrawer" @delete-member="deleteMember"
+          @mutli-delete-members="handleSelectionChange" />
+      </template>
 
+      <template v-slot:pagination-box>
+        <el-pagination layout="prev, pager, next" @current-change="handlePageChange"
+          :page-count="Number(memberRes.pages)" :default-page-size="Number(memberRes.size)"
+          :hide-on-single-page="false" />
+      </template>
+    </BasicComponent>
 
-      </div>
-
-      <el-table class="member-table" :data="memberList.records" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" />
-
-
-        <el-table-column prop="chineseName" label="姓名" width="100"></el-table-column>
-        <el-table-column prop="email" label="信箱" />
-        <el-table-column prop="phone" label="手機號碼" width="150" />
-
-
-
-
-        <el-table-column prop="tagSet" label="標籤" min-width="40" align="center">
-          <template #default="scope">
-            <el-popover v-if="scope.row.tagSet.length > 0" placement="left-start" title="標籤" :width="200"
-              trigger="hover">
+    <el-dialog v-model="tagDialogState.isOpen" title="編輯標籤" :width="tagDialogState.width"
+      :before-close="tagDialogState.closeDialog">
+      <h1>{{ assignMember.name }}</h1>
+      <div class="transfer-box">
+        <el-transfer ref="transferPanelRef" v-model="assignMember.tagList" :data="transferDataList"
+          :titles="['未擁有', '已擁有']">
+          <template #default="{ option }">
+            <el-popover v-if="option.isOverParentElementWidth" class="box-item" placement="top" :width="option.width">
               <template #reference>
-                <el-tag v-if="findFirstVaildTag(scope.row.tagSet)" size="large" round
-                  :color="findFirstVaildTag(scope.row.tagSet).color" effect="light">{{
-                    findFirstVaildTag(scope.row.tagSet).name }}</el-tag>
+                <el-tag :color="option.color" size="large" round>{{ option.label }}</el-tag>
               </template>
               <template #default>
-                <div v-for="tag in scope.row.tagSet" :key="tag.tagId" class="tag-item">
-                  <el-tag v-if="tag.status === 0" size="large" round :color="tag.color">{{
-                    tag.name }}</el-tag>
-                </div>
+                <el-tag :color="option.color" size="large" round>{{ option.label }}</el-tag>
               </template>
             </el-popover>
-
+            <el-tag v-else :color="option.color" size="large" round>{{ option.label }}</el-tag>
           </template>
-        </el-table-column>
-
-
-        <el-table-column fixed="right" label="操作" width="150">
-          <!-- 透過#default="scope" , 獲取到當前的對象值 , scope.row則是拿到當前那個row的數據  -->
-          <template #default="scope">
-            <el-button link type="success" size="small" @click="toggleTagsDialog(scope.row)">
-              Tags
-            </el-button>
-            <el-button link type="primary" size="small" @click="editRow(scope.row)">
-              Edit
-            </el-button>
-            <el-button link type="danger" size="small" @click="deleteRow(scope.row.memberId)">
-              Delete</el-button>
-
+          <template #left-empty>
+            <el-empty :image-size="60" description="No data" />
           </template>
-        </el-table-column>
-      </el-table>
-
-
-      <!-- 
-      分頁插件 total為總資料數(這邊設置20筆),  default-page-size代表每頁顯示資料(預設為10筆,這邊設置為5筆) 
-      current-page當前頁數,官方建議使用v-model與current-page去與自己設定的變量做綁定,
-    -->
-      <div class="example-pagination-block member-pagination">
-        <el-pagination layout="prev, pager, next" :page-count="Number(memberList.pages)"
-          :default-page-size="Number(memberList.size)" v-model:current-page="currentPage" :hide-on-single-page="true" />
+          <template #right-empty>
+            <el-empty :image-size="60" description="No data" />
+          </template>
+        </el-transfer>
       </div>
-
-      <el-dialog v-model="tagsDialogIsOpen" title="編輯標籤">
-        <h1>{{ assignMember.name }}</h1>
-        <div class="transfer-box">
-          <el-transfer v-model="assignMember.tagList" :data="transferDataList" :titles="['未擁有', '已擁有']">
-            <template #default="{ option }">
-              <el-tag :color="option.color" size="large" round>{{ option.label }}</el-tag>
-            </template>
-            <template #left-empty>
-              <el-empty :image-size="60" description="No data" />
-            </template>
-            <template #right-empty>
-              <el-empty :image-size="60" description="No data" />
-            </template>
-          </el-transfer>
-        </div>
-        <template #footer>
-          <el-button>取消</el-button>
-          <el-button type="primary" @click="submitTagsList">保存</el-button>
-        </template>
-      </el-dialog>
-
-
-
-      <!-- 修改時的Drawer -->
-      <el-drawer v-model="drawer" title="I am the title">
-
-        <template #header>
-          <h4>資料修改</h4>
-        </template>
-
-        <template #default>
-          <el-form label-position="top" label-width="auto" :model="updateMemberForm" ref="updateMemberFormRef">
-
-            <el-form-item label="姓名" prop="chineseName" :rules="formRulesTW.chineseName">
-              <el-input v-model="updateMemberForm.chineseName" placeholder="請輸入密碼" />
-            </el-form-item>
-
-            <el-form-item label="身分證" prop="idCard" :rules="formRulesTW.idCard">
-              <el-input v-model="updateMemberForm.idCard" />
-            </el-form-item>
-
-            <el-form-item label="E-Mail" prop="email" :rules="formRulesTW.email">
-              <el-input disabled v-model="updateMemberForm.email" />
-            </el-form-item>
-
-            <el-form-item label="單位" prop="affiliation" :rules="formRulesTW.affiliation">
-              <el-input v-model="updateMemberForm.affiliation">
-              </el-input>
-            </el-form-item>
-
-            <el-form-item label="職稱" prop="jobTitle" :rules="formRulesTW.jobTitle">
-              <el-input v-model="updateMemberForm.jobTitle" />
-            </el-form-item>
-
-            <el-form-item label="連絡電話" prop="phone" :rules="formRulesTW.phone">
-              <el-input disabled v-model="updateMemberForm.phone" />
-            </el-form-item>
-
-            <el-form-item label="飲食偏好" prop="dietaryPreference">
-              <el-radio-group v-model="updateMemberForm.food" placeholder="Select" style="width: 240px;">
-                <el-radio label="葷食" value="葷">
-                </el-radio>
-                <el-radio label="素食" value="素">
-                </el-radio>
-              </el-radio-group>
-            </el-form-item>
-
-            <el-form-item label="飲食禁忌" prop="foodTaboo">
-              <el-input v-model="updateMemberForm.foodTaboo" placeholder="請輸入飲食禁忌" />
-            </el-form-item>
-
-
-          </el-form>
-        </template>
-
-
-        <template #footer>
-          <div style="flex: auto">
-            <el-button @click="cancelClick">取消</el-button>
-            <el-button type="primary" @click="confirmClick()">送出</el-button>
-          </div>
-        </template>
-
-      </el-drawer>
-    </el-card>
-    <!-- Insert Form -->
-    <el-dialog class="insert-dialog" v-model="dialogFormVisible" width="500">
-      <el-form class="insert-form" ref="form" :model="insertForm" label-position="top">
-        <el-form-item class="insert-name" label="姓名" prop="chineseName" :rules="formRulesTW.chineseName">
-          <el-input v-model="insertForm.chineseName" placeholder="請輸入姓名" />
-        </el-form-item>
-        <el-form-item class="" label="電子信箱" prop="email" :rules="formRulesTW.email">
-          <el-input v-model="insertForm.email" type="email" placeholder="請輸入E-mail" />
-        </el-form-item>
-        <el-form-item class="" label="單位" prop="affiliation" :rules="formRulesTW.affiliation">
-          <el-input v-model="insertForm.affiliation" placeholder="單位" />
-        </el-form-item>
-        <el-form-item class="" label="職稱" prop="jobTitle" :rules="formRulesTW.jobTitle">
-          <el-input v-model="insertForm.jobTitle" placeholder="職稱" />
-        </el-form-item>
-        <el-form-item class="" label="身分證" prop="idCard" :rules="formRulesTW.idCard">
-          <el-input v-model="insertForm.idCard" placeholder="身分證" />
-        </el-form-item>
-        <div class="phone-num-box">
-          <el-form-item class="" label="電話號碼" prop="countryCode" :rules="formRulesTW.countryCode">
-            <el-input class="country-code-input" v-model="insertForm.countryCode" disabled placeholder="國家代碼" />
-          </el-form-item>
-          <el-form-item class="" label="" prop="phone" :rules="formRulesTW.phone">
-            <el-input class="phone-input" v-model="insertForm.phone" placeholder="電話號碼"></el-input>
-          </el-form-item>
-        </div>
-        <el-form-item class="" label="飲食偏好" prop="food">
-          <el-radio-group v-model="insertForm.food" placeholder="Select" style="width: 240px;">
-            <el-radio label="葷食" value="葷">
-            </el-radio>
-            <el-radio label="素食" value="素">
-            </el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item class="" label="飲食禁忌" prop="foodTaboo">
-          <el-input type="textarea" v-model="insertForm.foodTaboo" placeholder="請輸入飲食禁忌" />
-        </el-form-item>
-      </el-form>
       <template #footer>
-        <div style="flex: auto">
-          <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitInsertForm(form)">送出</el-button>
-        </div>
+        <el-button @click="tagDialogState.closeDialog">取消</el-button>
+        <el-button type="primary" @click="submitTagsList">保存</el-button>
       </template>
     </el-dialog>
 
-  </section>
 
+
+    <!-- 修改時的Drawer -->
+    <el-drawer v-model="updateMemberDrawerState.isOpen" title="更改資料" :size="updateMemberDrawerState.width"
+      :before-close="updateMemberDrawerState.closeDrawer">
+      <UpdateMemberForm :member-data="updateMemberForm" @update-member="handleUpdateSubmit" />
+    </el-drawer>
+
+
+    <el-dialog v-model="insertMemberDialogState.isOpen" title="新增會員" :width="insertMemberDialogState.width">
+      <InsertMemberForm @close="insertMemberDialogState.closeDialog" />
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang='ts'>
+import BasicComponent from '@/layout/components/Basic/index.vue'
 
 import { ref, reactive } from 'vue'
 import { Delete, Plus } from '@element-plus/icons-vue'
-import type { FormInstance } from 'element-plus'
-import { getMemberByPaginationByStatusApi, getMemberCountApi, updateMemberApi, deleteMemberApi, batchDeleteMemberApi, downloadMemberExcelApi, assignTagsToMember, addMemberByAdminApi } from '@/api/member'
+import { fetchMembersWithPaginationAndStatusApi, updateMemberApi, deleteMemberApi, batchDeleteMemberApi, downloadMemberExcelApi, assignTagsToMember } from '@/api/member'
 import { getAllTagsApi } from '@/api/tag'
 
-import type { memberRecordType } from '@/api/member/type.ts'
-import type { returnType } from '@/api/type'
 
-import { formRulesTW } from '@/utils/checkSum'
+import { Member, PutMemberForAdminInterface } from '@/api/member/type'
+import { tryCatch } from '@/utils/tryCatch'
+import InsertMemberForm from './components/InsertMemberForm.vue'
+import UpdateMemberForm from './components/UpdateMemberForm.vue'
+import MemberTable from './components/MemberTable.vue'
+import { useAppStore } from '@/store'
 
 
-/**================================================== */
+
+
 const downloadExcel = async () => {
-  try {
-    let res = await downloadMemberExcelApi()
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', '會員列表.xlsx');
-    document.body.appendChild(link);
-    link.click();
-  } catch (error) {
-    ElMessage.error("下載失敗" + error)
-  }
-}
-/**================================================== */
-
-//查詢內容
-let input = ref('')
-
-//篩選審核狀態,預設找已經過審的
-let filterStatus = ref('')
-
-//獲取同意書總數
-let memberCount = ref<number>(0)
-
-
-
-/**--------------顯示數據相關---------------------------- */
-
-
-const getMemberCount = async () => {
-  try {
-    let res = await getMemberCountApi()
-    memberCount.value = res.data
-  } catch (err) {
-    console.log(err)
-    ElMessage.error("獲取會員數量失敗")
-  }
+  let res = await downloadMemberExcelApi()
+  const url = window.URL.createObjectURL(new Blob([res.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', '會員列表.xlsx');
+  document.body.appendChild(link);
+  link.click();
 }
 
 
+/**---------------------------
+ * @description 管理獲取資料 
+ *
+ * @returns fetchConditions, memberRes, fetchMemberListWithPaginationAndStatus, handlePageChange
+ * 
+*/
+const useFetchDataManagement = () => {
 
-let memberList = reactive<Record<string, memberRecordType[]>>({
-  records: [{
-    memberId: "",
-    email: "",
-    chineseName: "",
-    firstName: "",
-    lastName: "",
-    country: "",
-    idCard: "",
-    group: "",
-    food: "",
-    title: "",
-    receipt: "",
-    category: "",
-    categoryExtra: "",
-    foodTaboo: "",
-    groupRole: "",
-    remitAccountLast5: "",
-    affiliation: "",
-    jobTitle: "",
-    phone: "",
-    status: "",
-    tagSet: [],
-  }]
-})
+  // 會員列表返回的數據結構
+  interface MemberResInterface {
+    current: number;
+    pages: number;
+    records: Array<Member>;
+    size: number;
+    total: number;
+  }
 
-//設定分頁組件,currentPage當前頁數
-let currentPage = ref<number>(1)
+  // 分頁及篩選條件
+  const fetchConditions = ref({
+    currentPage: 1,
+    input: '',
+    filterStatus: ''
+  })
 
+  // 會員列表數據
+  const memberRes = ref<MemberResInterface>({
+    current: 1,
+    pages: 1,
+    records: [],
+    size: 10,
+    total: 0
+  })
 
+  // 根據分頁及篩選條件獲取會員列表
+  const fetchMemberListWithPaginationAndStatus = async () => {
+    const { res, error }: any = await tryCatch(fetchMembersWithPaginationAndStatusApi(fetchConditions.value.currentPage, 10, fetchConditions.value.filterStatus, fetchConditions.value.input));
+    if (error || res.code !== 200) {
+      ElMessage.error(error || res.msg || '獲取會員列表失敗');
+    }
+    memberRes.value = res.data;
+  }
 
-const getMemberByPagination = async (page: number, size: number): Promise<void> => {
-  try {
-    let res = await getMemberByPaginationByStatusApi(page, size, filterStatus.value, input.value)
-    Object.assign(memberList, res.data)
-  } catch (err) {
-    console.log(err)
-    ElMessage.error("獲取會員資料失敗")
+  // 頁碼改變時的處理函數
+  const handlePageChange = (page: number) => {
+    fetchConditions.value.currentPage = page;
+    fetchMemberListWithPaginationAndStatus();
+  }
+
+  // 監聽輸入框變化，重置頁碼並重新獲取會員列表
+  watch(() => fetchConditions.value.filterStatus, (newVal, oldVal) => {
+    fetchConditions.value.currentPage = 1;
+    fetchMemberListWithPaginationAndStatus();
+  })
+
+  return {
+    fetchConditions,
+    memberRes,
+    fetchMemberListWithPaginationAndStatus,
+    handlePageChange
   }
 }
 
-
-//監聽當前頁數的變化,如果有更動就call API 獲取數組數據
-watch(currentPage, (value, oldValue) => {
-  getMemberByPagination(value, 10)
-})
+const { fetchConditions, memberRes, fetchMemberListWithPaginationAndStatus, handlePageChange } = useFetchDataManagement();
 
 
-watch(filterStatus, (value, oldValue) => {
-  getMemberByPagination(currentPage.value, 10)
-})
 
 /** --------- 刪除相關variable及function -------------- */
+const useDeleteMemberManagement = () => {
 
-//要刪除的對象列表
-let deleteSelectList = reactive([])
+  const selectedDeleteMemberList = ref<Member[]>([])
 
-//當checkbox狀態改變時的function,val是一個數組對象
-const handleSelectionChange = (val: any) => {
-  //重製deleteSelectList,移除所有屬性
-  deleteSelectList.length = 0
-  Object.assign(deleteSelectList, val)
-}
+  const deleteMember = async (memberId: string) => {
+    ElMessageBox.confirm(`確定要刪除此資料嗎？`, '確認刪除', {
+      confirmButtonText: '確定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(async () => {
+      // 用户選擇確認，繼續操作
+      console.log('Deleting member with ID:', memberId);
+      const { res, error }: any = await tryCatch(deleteMemberApi(memberId));
+      if (error || res.code !== 200) {
+        ElMessage.error(error || res.msg || '刪除會員失敗');
+        return;
+      }
+      fetchMemberListWithPaginationAndStatus();
+      ElMessage.success('刪除成功');
+    }).catch((err) => {
+    });
+  }
 
-//刪除同意書
-const deleteRow = (id: number): void => {
-  ElMessageBox.confirm(`確定要刪除此資料嗎？`, '確認刪除', {
-    confirmButtonText: '確定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    // 用户選擇確認，繼續操作
-    await deleteMemberApi(id)
-    getMemberByPagination(currentPage.value, 10)
+  const handleSelectionChange = (val: Member[]) => {
+    selectedDeleteMemberList.value = val;
+  }
 
-    ElMessage.success('刪除成功');
-  }).catch((err) => {
-    console.log(err)
-  });
-}
-
-//批量刪除同意書的function
-const deleteList = () => {
-  if (deleteSelectList.length >= 1) {
-    ElMessageBox.confirm(`確定要刪除這${deleteSelectList.length}個會員資料嗎？`, '確認刪除', {
+  const batchDeleteMember = async () => {
+    if (selectedDeleteMemberList.value.length < 1) {
+      ElMessage.error("請至少勾選一筆資料進行刪除");
+      return;
+    }
+    ElMessageBox.confirm(`確定要刪除這${selectedDeleteMemberList.value.length}個會員資料嗎？`, '確認刪除', {
       confirmButtonText: '確定',
       cancelButtonText: '取消',
       type: 'warning'
     }).then(async () => {
       //確定刪除後使用父組件傳來的function
       //提取idList
-      console.log(deleteSelectList)
-      let deleteIdList = deleteSelectList.map((item: { memberId: string }) => item.memberId)
-      await batchDeleteMemberApi(deleteIdList)
-      getMemberByPagination(currentPage.value, 10)
+      let deleteIdList = selectedDeleteMemberList.value.map(item => item.memberId);
+      const { res, error }: any = await tryCatch(batchDeleteMemberApi(deleteIdList));
+      if (error || res.code !== 200) {
+        ElMessage.error(error || res.msg || '批量刪除會員失敗');
+        return;
+      }
+      fetchMemberListWithPaginationAndStatus();
       ElMessage.success('刪除成功');
     }).catch((err) => {
-      console.log(err)
-    })
+    });
+  }
 
-  } else {
-    ElMessage.error("請至少勾選一筆資料進行刪除")
+  return {
+    selectedDeleteMemberList,
+    deleteMember,
+    handleSelectionChange,
+    batchDeleteMember
   }
 }
 
+const { selectedDeleteMemberList, deleteMember, handleSelectionChange, batchDeleteMember } = useDeleteMemberManagement();
+
+
+
 /**-------------表單相關variable及function------------------------- */
+
+const insertMemberDialogState = ref<DialogState>({
+  isOpen: false,
+  width: computed(() => (useAppStore().device === 'mobile') ? '90%' : '45%'),
+  openDialog: () => {
+    insertMemberDialogState.value.isOpen = true
+  },
+  closeDialog: () => {
+    insertMemberDialogState.value.isOpen = false
+    fetchMemberListWithPaginationAndStatus()
+  }
+})
+
+
 
 
 /**------------編輯內容相關操作---------------------- */
-
-//drawer的開關
-const drawer = ref(false)
-
-//drawer內,取消按鈕
-const cancelClick = () => {
-  drawer.value = false
-}
+const updateMemberDrawerState = ref<DrawerState>({
+  isOpen: false,
+  width: computed(() => (useAppStore().device === 'mobile') ? '90%' : '45%'),
+  openDrawer: (member: Member) => {
+    updateMemberDrawerState.value.isOpen = true
+    Object.assign(updateMemberForm, member)
+  },
+  closeDrawer: () => {
+    updateMemberDrawerState.value.isOpen = false
+  }
+})
 
 //編輯的表單元素本身
 
-const updateMemberFormRef = ref()
-
-let updateMemberForm = reactive<memberRecordType>({
+let updateMemberForm = reactive<Member>({
   memberId: "",
-  group: "",
-  title: "",
-  receipt: "",
-  category: "",
-  categoryExtra: "",
-  groupRole: "",
   email: "",
   chineseName: "",
   firstName: "",
@@ -425,48 +294,45 @@ let updateMemberForm = reactive<memberRecordType>({
   affiliation: "",
   jobTitle: "",
   phone: "",
-  status: "",
+  status: 0,
   food: "",
   foodTaboo: "",
+  receipt: "",
   idCard: "",
-  tagSet: [],
+  category: 1,
+  amount: 0,
+  title: "",
+  tagList: [],
+  countryCode: "",
 })
 
 
+// 更新資料
+const handleUpdateSubmit = async (updateData: PutMemberForAdminInterface) => {
+  const { res, error }: any = await tryCatch(updateMemberApi(updateData));
 
-
-//drawer內,確認按鈕
-const confirmClick = async () => {
-  //沒有抓到的這個Dom直接返回
-  updateMemberFormRef.value.validate(async (valid: boolean) => {
-    if (valid) {
-      console.log(updateMemberForm)
-      await updateMemberApi(updateMemberForm)
-      drawer.value = false
-      ElMessage.success("修改完成")
-      await getMemberByPagination(currentPage.value, 10)
-
-
-    } else {
-      ElMessage.error("請完整填入資訊")
-    }
-  })
-
+  if (error || res.code !== 200) {
+    ElMessage.error(error || res.msg || "修改會員資料失敗");
+    return;
+  }
+  ElMessage.success("修改完成");
+  fetchMemberListWithPaginationAndStatus();
+  updateMemberDrawerState.value.closeDrawer();
 }
 
-const editRow = (member: any): void => {
-  Object.assign(updateMemberForm, member)
-  console.log(updateMemberForm)
-  drawer.value = true
-}
+
+
+
 
 /**-------------------標籤-------------------- */
-let tagsDialogIsOpen = ref(false);
+// let tagsDialogIsOpen = ref(false);
 let assignMember = reactive<any>({});
 
 let tagsList = reactive<any>([]);
 
 let transferDataList = reactive<any>([]);
+
+
 
 const getTagsList = async () => {
   let res = await getAllTagsApi()
@@ -476,104 +342,114 @@ const getTagsList = async () => {
       label: item.name,
       key: item.tagId,
       disabled: item.status === 1,
-      color: item.color
+      color: item.color,
+      isOverParentElementWidth: false,
+      width: 0
     })
   })
 }
 
-const findFirstVaildTag = (tagSet: any) => {
-  for (let i = 0; i < tagSet.length; i++) {
-    if (tagSet[i].status === 0) {
-      return tagSet[i];
+const findFirstVaildTag = (tagList: any) => {
+  for (let i = 0; i < tagList.length; i++) {
+    if (tagList[i].status === 0) {
+      return tagList[i];
     }
   }
   return '';
 }
 
-const toggleTagsDialog = async (member: any) => {
-  assignMember = member;
-  assignMember.tagList = Array.from(member.tagSet).map((item: any) => item.tagId);
-  tagsDialogIsOpen.value = true;
-}
+const tagDialogState = ref<DialogState>({
+  isOpen: false,
+  width: computed(() => (useAppStore().device === 'mobile') ? '90%' : '70%'),
+  openDialog: (member: Member) => {
+    tagDialogState.value.isOpen = true;
+    Object.assign(assignMember, member);
+    if (member.tagList) {
+      assignMember.tagList = Array.from(member.tagList).map((item: any) => item.tagId);
+    }
+  },
+  closeDialog: () => {
+    fetchMemberListWithPaginationAndStatus()
+    tagDialogState.value.isOpen = false;
+  }
+});
+
 
 const submitTagsList = async () => {
   let data = {
     memberId: assignMember.memberId,
     targetTagIdList: assignMember.tagList
   }
-  let res = await assignTagsToMember(data);
-  getMemberByPagination(currentPage.value, 10);
-  tagsDialogIsOpen.value = false;
+
+  const { res, error }: any = await tryCatch(assignTagsToMember(data));
+  if (error || res.code !== 200) {
+    ElMessage.error(error || res.msg || '分配標籤失敗');
+    return;
+  }
+  tagDialogState.value.closeDialog();
+
 }
 
+/**====================處理新增與修改RWD================== */
 
+const transferPanelRef = ref();
+watch(() => transferPanelRef.value, (newVal) => {
+  if (newVal) {
+    // 獲取所有的 transfer body 元素
+    const transferPanelBodyList = transferPanelRef.value.$el.querySelectorAll('.el-transfer-panel__body');
+    // 遍歷 body 元素
+    transferPanelBodyList.forEach((transferPanelBody: any) => {
+      // 獲取 body 寬度
+      const transferPanelBodyWidth: number = Number(getComputedStyle(transferPanelBody).width.split('px')[0]);
+      //獲取裡面所有的 tag label
+      const transferPanelBodyItemTagContent = transferPanelBody.querySelectorAll('.el-tag__content');
+      // 遍歷所有的 tag 元素找出寬度超過父元素的
+      transferPanelBodyItemTagContent.forEach((item: any, index: number) => {
+        const width = Number(getComputedStyle(item).width.split('px')[0]);
+        if (width > transferPanelBodyWidth) {
+          let foundTag = transferDataList.find((tag: any) => tag.label === item.textContent);
+          foundTag.isOverParentElementWidth = true;
+          foundTag.width = width + 40;
+        }
+      });
 
-
-
-
-
-
-/**======================Insert Form============================= */
-const insertForm = reactive({
-  chineseName: '',
-  email: '',
-  affiliation: '',
-  jobTitle: '',
-  idCard: '',
-  countryCode: '886',
-  phone: '',
-  food: '葷',
-  foodTaboo: '',
-  category: '4',
-  country: 'Taiwan',
-})
-//是否顯示表單dialog
-const dialogFormVisible = ref(false)
-
-//表單實例
-const form = ref()
-
-//顯示新增Dialog
-const toggleAddDialog = () => {
-  dialogFormVisible.value = true
-}
-
-//送出表單方法
-const submitInsertForm = (form: FormInstance | undefined) => {
-  //沒有抓到的這個Dom直接返回
-  if (!form) return
-  form.validate(async (valid) => {
-    if (valid) {
-      try {
-        //呼叫父組件給的新增function API
-        await addMemberByAdminApi(insertForm)
-        ElMessage.success('新增成功');
-        getMemberByPagination(currentPage.value, 10)
-        form.resetFields()
-
-      } catch (err: any) {
-        console.log(err)
-      }
-      //最終都將這個dialog關掉
-      dialogFormVisible.value = false
-
-    } else {
-      ElMessage.error("請完整填入資訊")
-    }
-  })
-}
-
-
-
-
+    });
+  }
+});
 
 /**-------------------掛載頁面時執行-------------------- */
 
 onMounted(() => {
-  getMemberByPagination(1, 10)
-  getMemberCount()
+  fetchMemberListWithPaginationAndStatus()
   getTagsList()
 })
+
+
+// 狀態選擇
+const statusList = ref<{ label: string, value: string }[]>([
+  {
+    label: '全選',
+    value: ''
+  }, {
+    label: '未繳費',
+    value: '0'
+  }, {
+    label: '待審核',
+    value: '1'
+  }, {
+    label: '繳費成功',
+    value: '2'
+  }, {
+    label: '繳費失敗',
+    value: '3'
+  }
+])
+
+const deleteButtonIsDisabled = computed(() => {
+  return selectedDeleteMemberList.value.length > 0 ? false : true;
+});
+
+const isDevice = computed(() => useAppStore().device === 'mobile' ? true : false);
 
 
 
@@ -610,12 +486,24 @@ onMounted(() => {
     font-weight: 600;
   }
 
+
+
 }
 
-.filter-status {
-  margin-left: 10px;
-}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 
+  .el-input,
+  .el-select {
+    width: 15rem;
+  }
+
+  @media screen and (max-width: 760px) {
+    flex-direction: column;
+  }
+}
 
 .member-table {
   width: 100%;
@@ -676,5 +564,116 @@ onMounted(() => {
 
 :deep(.el-tag__close) {
   color: red;
+}
+
+.insert-form {
+  padding: 2rem;
+  width: 80%;
+  margin-inline: auto;
+
+  .el-select {
+    width: 100%;
+  }
+
+  .el-input {
+    width: 100%;
+  }
+
+  .category {
+
+    :deep(.el-radio-group) {
+      flex-direction: column;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    :deep(.el-form-item__error) {
+      position: absolute;
+      top: 0.5rem;
+      left: 10rem;
+      width: 20rem;
+
+      @media screen and (max-width: 768px) {
+        left: 13rem;
+      }
+    }
+
+    :deep(.el-select) {
+      width: 150px;
+    }
+
+  }
+
+  .phone-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+
+    .country-code {
+      width: 30%;
+    }
+
+    .phone {
+      width: 70%;
+    }
+  }
+
+  .title-form-item {
+    width: 100%;
+
+    .title-radio-group {
+      width: 100%
+    }
+  }
+
+
+}
+
+// 設置 transfer 面板寬度
+:deep(.el-transfer-panel) {
+  width: 300px;
+
+  .el-transfer-panel__body {
+    overflow: hidden;
+  }
+
+}
+
+// 設置 transfer 面板內列表為 column 並設置間距
+:deep(.el-transfer-panel__list) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+:deep(.el-transfer__buttons) {
+  @media screen and (max-width: 760px) {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+
+    .el-button {
+      &:first-child {
+        .el-icon {
+          transform: rotate(90deg);
+        }
+      }
+
+      &:last-child {
+        .el-icon {
+          transform: rotate(90deg);
+        }
+      }
+    }
+  }
+
+}
+
+
+// 設置 table 內的標籤顯示為可滑動區塊
+.tag-popover-box {
+  overflow: scroll !important;
 }
 </style>

@@ -51,16 +51,15 @@ export function getMemberByPaginationApi(
  * @param status
  * @returns
  */
-export function getMemberByPaginationByStatusApi(
+export function fetchMembersWithPaginationAndStatusApi(
   page: number,
   size: number,
   status: string,
   queryText?: string
   // tags?: number[]
 ): AxiosPromise {
-  // console.log("tags", tags);
   return request({
-    url: "/member/tag/pagination-by-query",
+    url: "/member/tag/pagination",
     method: "get",
     params: {
       page,
@@ -170,7 +169,7 @@ export function batchUpdateMemberApi(data: any): AxiosPromise {
  * @param id
  * @returns
  */
-export function deleteMemberApi(id: number): AxiosPromise {
+export function deleteMemberApi(id: string): AxiosPromise {
   return request({
     url: `/member/${id}`,
     method: "delete",
@@ -210,7 +209,32 @@ export function assignTagsToMember(data: any): AxiosPromise {
   });
 }
 
-export function addMemberByAdminApi(data: any): AxiosPromise {
+export function getUnpaidMemberApi(
+  page: number,
+  queryText: string
+): AxiosPromise {
+  return request({
+    url: "/member/unpaid-member",
+    method: "get",
+    params: {
+      page: page,
+      size: 10,
+      queryText: queryText,
+    },
+  });
+}
+
+export function updateUnpaidMemberApi(memberId: string): AxiosPromise {
+  return request({
+    url: "/member/unpaid-member",
+    method: "put",
+    data: {
+      memberId: memberId,
+    },
+  });
+}
+
+export function addVipMemberApi(data: any): AxiosPromise {
   return request({
     url: "/member/admin",
     method: "post",

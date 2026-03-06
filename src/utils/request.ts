@@ -12,8 +12,11 @@ const service = axios.create({
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const accessToken = localStorage.getItem("Authorization");
+    const reviewerAccessToken = localStorage.getItem("Authorization-paper-reviewer");
     if (accessToken) {
       config.headers.Authorization = accessToken;
+    } else if (reviewerAccessToken) {
+      config.headers['Authorization-paper-reviewer'] = reviewerAccessToken;
     }
     return config;
   },
@@ -35,44 +38,74 @@ service.interceptors.response.use(
       return response;
     }
 
-    if (code == '401') {
-      localStorage.removeItem("Authorization")
-    }
-    ElMessage(
-      {
-        type: "error",
-        dangerouslyUseHTMLString: true,
-        message: `<B><p style='font-size:1.2rem'>${msg || "系统出错"}</p></B>`,
-      }
-    );    
-    return Promise.reject(new Error(msg || "Error"));
+    if (code == "401") {
+      if (localStorage.getItem("Authorization-paper-reviewer")) {
+        localStorage.removeItem("Authorization-paper-reviewer");
+        localStorage.setItem("paper-reviewer-logout", "true");
+        const userStore = useUserStoreHook();
+        userStore.resetReviewerToken().then(() => {
+          location.reload();
+        });
 
+      }
+      localStorage.removeItem("Authorization");
+      window.location.reload();
+    }
+    if (response.status == 200 && response.data instanceof Blob) {
+      return response;
+    }
+    ElMessage.error(msg || "系统出错");
+    return Promise.reject(new Error(msg || "Error"));
   },
   (error: any) => {
+
+    console.log(error)
     if (error.response.data) {
-      const { code, msg } = error.response.data;
-      // token 过期,重新登录
-      if (code === "A0230") {
-        ElMessageBox.confirm("当前页面已失效，请重新登录", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        }).then(() => {
+      const { status, data } = error.response;
+
+      // 統一返回後端錯誤信息
+      ElMessage.error(data.msg)
+
+      if (status == 401) {
+        if (localStorage.getItem("Authorization-paper-reviewer")) {
+          localStorage.removeItem("Authorization-paper-reviewer");
+          localStorage.setItem("paper-reviewer-logout", "true");
           const userStore = useUserStoreHook();
-          userStore.resetToken().then(() => {
+          userStore.resetReviewerToken().then(() => {
             location.reload();
           });
-        });
-      } else {
-        ElMessage(
-          {
-            type: "error",
-            dangerouslyUseHTMLString: true,
-            message: `<B><p style='font-size:1.2rem'>${msg || "系统出错"}</p></B>`,
-          }
-        );
+
+        }
+        localStorage.removeItem("Authorization");
+        window.location.reload();
       }
+
     }
+
+    // if (error.response.data) {
+    //   const { code, msg } = error.response.data;
+    //   // token 过期,重新登录
+    //   if (code === "A0230") {
+    //     ElMessageBox.confirm("当前页面已失效，请重新登录", "提示", {
+    //       confirmButtonText: "确定",
+    //       cancelButtonText: "取消",
+    //       type: "warning",
+    //     }).then(() => {
+    //       const userStore = useUserStoreHook();
+    //       if (localStorage.getItem("Authorization-paper-reviewer")) {
+    //         userStore.resetReviewerToken().then(() => {
+    //           location.reload();
+    //         });
+    //       } else {
+    //         userStore.resetToken().then(() => {
+    //           location.reload();
+    //         });
+    //       }
+    //     });
+    //   } else {
+    //     ElMessage.error(msg || "系统出错");
+    //   }
+    // }
     return Promise.reject(error.message);
   }
 );

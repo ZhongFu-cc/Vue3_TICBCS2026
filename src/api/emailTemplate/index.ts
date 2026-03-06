@@ -107,10 +107,16 @@ export function sendEmailByCategoryAndTagApi(
   data: any,
   url: string
 ): AxiosPromise {
-  console.log(data);
   return request({
     url: url,
     method: "post",
     data,
+  });
+}
+
+export function fetchEmailQuotaApi(): AxiosPromise<any> {
+  return request({
+    url: `/email-template/email-quota`,
+    method: "get",
   });
 }
