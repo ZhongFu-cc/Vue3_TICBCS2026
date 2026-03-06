@@ -44,6 +44,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       preprocessorOptions: {
         // 定义全局 SCSS 变量
         scss: {
+          api: 'modern-compiler',
           javascriptEnabled: true,
           additionalData: `
             @use "@/styles/variables.scss" as *;
@@ -73,7 +74,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           target: env.VITE_MINIO_API_URL,
           rewrite: (path) =>
             path.replace(new RegExp("^" + env.VITE_MINIO_API), ""),
-        },
+        }
       },
     },
     plugins: [
@@ -109,18 +110,18 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         // dts: "src/typings/auto-imports.d.ts",
       }),
 
-      //unplugin-vue-components
+      //unplugin-vue-components 
       /**
-       *
+       * 
        * unplugin-vue-components 是一個 Vue.js 生態系統的 Vite 插件，它提供了一種簡單的方式來自動掃描和註冊 Vue 組件，
        * 使其成為全局組件，從而讓你在整個應用程式中都能夠使用這些組件。
        * 具體來說，在 Vite 專案中使用 unplugin-vue-components，它可以幫助你：
-       *
+       * 
        * 1.自動掃描組件: 通過設置適當的目錄或模式，它可以自動從指定的目錄中掃描 Vue 組件。
        * 2.註冊全局組件: 掃描到的組件將被自動註冊為全局組件，這樣你就無需在每個單獨的組件中進行手動的引入和註冊，而是可以直接在任何地方使用這些組件。
        * 3.動態載入: 在需要時動態地載入和註冊組件，從而使得你的應用程式可以更靈活地管理組件的使用。
        * 4.總的來說，unplugin-vue-components 能夠節省開發者的時間，提高開發效率，同時也能夠幫助保持代碼的整潔和一致性，使得在 Vue.js 應用程式中管理和使用組件變得更加容易。
-       *
+       * 
        */
       Components({
         resolvers: [
@@ -137,7 +138,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         //dirs 配置項是用於指定要掃描的目錄的相對路徑或匹配模式。
         //當使用像 unplugin-vue-components 這樣的工具時，dirs 配置項用於告訴它去哪裡尋找 Vue 組件，並將它們自動註冊為全局組件。
         //這邊要注意,像是這樣寫, 是在src的任意目錄下的/components的 index.vue喔, 不是就不會登入成全局組件
-        dirs: ["src/**/components"],
+        dirs: ["src/**/components",],
         // 指定自动导入组件TS类型声明文件路径 (false:关闭自动生成)
         dts: false,
         // dts: "src/typings/components.d.ts",
@@ -224,13 +225,14 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     },
     // 构建配置
     build: {
+
       chunkSizeWarningLimit: 2000, // 消除打包大小超过500kb警告
       minify: "terser", // Vite 2.6.x 以上需要配置 minify: "terser", terserOptions 才能生效
       terserOptions: {
         compress: {
           keep_infinity: true, // 防止 Infinity 被压缩成 1/0，这可能会导致 Chrome 上的性能问题
           drop_console: false, // 生产环境去除 console
-          drop_debugger: false, // 生产环境去除 debugger
+          drop_debugger: true, // 生产环境去除 debugger
         },
         format: {
           comments: false, // 删除注释

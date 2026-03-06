@@ -47,6 +47,13 @@ export function deleteTagApi(id: number): AxiosPromise {
   });
 }
 
+export function getAssociationIdListByTagIdApi(tagId: string): AxiosPromise {
+  return request({
+    url: `/tag/associated/${tagId}`,
+    method: "get",
+  });
+}
+
 export function assignMemberToTagApi(data: any): AxiosPromise {
   return request({
     url: "/tag/member",
@@ -56,7 +63,6 @@ export function assignMemberToTagApi(data: any): AxiosPromise {
 }
 
 export function assignPaperToTagApi(data: any) {
-  console.log("assignPaperToTagApi", data);
   return request({
     url: "/tag/paper",
     method: "put",
@@ -82,6 +88,20 @@ export function findMemberIdListByTagIdApi(tagId: string): AxiosPromise {
 export function findAttendeesIdListByTagIdApi(tagId: string): AxiosPromise {
   return request({
     url: `/tag/attendees/${tagId}`,
+    method: "get",
+  });
+}
+
+export function findPaperIdListByTagIdApi(tagId: string): AxiosPromise {
+  return request({
+    url: `/tag/paper/${tagId}`,
+    method: "get",
+  });
+}
+
+export function findPaperReviewerIdListByTagIdApi(tagId: string): AxiosPromise {
+  return request({
+    url: `/tag/paper-reviewer/${tagId}`,
     method: "get",
   });
 }
