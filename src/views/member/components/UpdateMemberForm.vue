@@ -82,7 +82,7 @@
 import { PutMemberForAdminInterface } from '@/api/member/type';
 import { FormInstance } from 'element-plus';
 import countriesData from '@/assets/data/countries.json'
-import { memberEnums } from '@/enums/memberEnum';
+import { memberEnums } from '@/enums/MemberEnum';
 
 const countries = ref(countriesData)
 const titles = ['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.'];

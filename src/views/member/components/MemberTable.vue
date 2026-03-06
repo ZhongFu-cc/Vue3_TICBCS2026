@@ -77,7 +77,7 @@
 </template>
 <script setup lang='ts'>
 import { Member } from '@/api/member/type';
-import { memberEnums } from '@/enums/memberEnum';
+import { memberEnums } from '@/enums/MemberEnum';
 import { useAppStore } from '@/store';
 
 const props = defineProps<{
