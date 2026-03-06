@@ -1,0 +1,68 @@
+name: Deploy
+
+on:
+  push:
+    branches: main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+    
+      - name: Node.js setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Diagnostics
+        run: |
+          echo "Current Working Directory is: $PWD"
+          ls -a # 這裡應該會看到 package.json
+
+      - name: Install depemdemcoes and Build
+        working-directory: ./ 
+        env:
+          VITE_APP_BASE_API: ${{ secrets.VITE_APP_BASE_API }}
+          VITE_MINIO_API: ${{ secrets.VITE_MINIO_API }}
+        run: |
+          npm install -g pnpm
+          pnpm install
+          pnpm run build:prod
+
+      - name: List dist folder
+        run: ls -la dist
+
+      - name: Check remote folder
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            ls -la /home/user/front-end/backstage
+
+      - name: Sync Dis Files to AlmaLinux VM
+        uses: burnett01/rsync-deployments@v8
+        with:
+          remote_host: ${{ secrets.GCP_VM_HOST }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          path: "dist/"
+          remote_path: /home/user/front-end/backstage
+          debug: true
+          switches: "-avz --delete"
+
+      - name: Copy to nginx
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          port: 22
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo cp -r /home/user/front-end/backstage/* /usr/share/nginx/html/background
+        
+  
+    
