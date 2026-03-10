@@ -274,7 +274,7 @@ const updateMemberDrawerState = ref<DrawerState>({
   width: computed(() => (useAppStore().device === 'mobile') ? '90%' : '45%'),
   openDrawer: (member: Member) => {
     updateMemberDrawerState.value.isOpen = true
-    Object.assign(updateMemberForm, member)
+    updateMemberForm.value = member
   },
   closeDrawer: () => {
     updateMemberDrawerState.value.isOpen = false
@@ -283,7 +283,7 @@ const updateMemberDrawerState = ref<DrawerState>({
 
 //編輯的表單元素本身
 
-let updateMemberForm = reactive<Member>({
+let updateMemberForm = ref<Member>({
   memberId: "",
   email: "",
   chineseName: "",

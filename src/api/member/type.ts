@@ -5,6 +5,7 @@ export interface Member {
   groupRule?: string | null;
   title: string;
   email: string;
+  confirmEmail?: string;
   chineseName: string | null;
   firstName: string;
   lastName: string;

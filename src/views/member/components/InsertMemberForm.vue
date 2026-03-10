@@ -31,26 +31,29 @@
       <el-form-item label="E-mail" prop="email" :rules="emailRules">
         <el-input v-model="data.email" placeholder="E-mail" />
       </el-form-item>
-      <el-form-item label="密碼" prop="password" :rules="passwordRules">
+      <el-form-item label="確認信箱" prop="confirmEmail" :rules="confirrmEmailRules(data.email)">
+        <el-input v-model="data.confirmEmail" placeholder="確認信箱" />
+      </el-form-item>
+      <!-- <el-form-item label="密碼" prop="password" :rules="passwordRules">
         <el-input v-model="data.password" placeholder="密碼" type="password" />
       </el-form-item>
       <el-form-item label="確認密碼" prop="confirmPassword">
         <el-input v-model="data.confirmPassword" placeholder="確認密碼" type="password" />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item label="所屬機構" prop="affiliation" :rules="affiliationRules">
         <el-input v-model="data.affiliation" placeholder="單位" />
       </el-form-item>
       <el-form-item label="職稱" prop="jobTitle" :rules="jobTitleRules">
         <el-input v-model="data.jobTitle" placeholder="職稱" />
       </el-form-item>
-      <el-form-item label="身份證字號/護照號碼" prop="idCard" :rules="data.country === 'Taiwan' ? idCardRules : passportRules">
+      <!-- <el-form-item label="身份證字號/護照號碼" prop="idCard" :rules="data.country === 'Taiwan' ? idCardRules : passportRules">
         <el-input v-model="data.idCard" placeholder="身份證字號/護照號碼" />
-      </el-form-item>
+      </el-form-item> -->
       <div class="phone-section">
         <el-form-item label="國碼" prop="countryCode" class="country-code" :rules="countryCodeRules">
           <el-input v-model="data.countryCode" />
         </el-form-item>
-        -
+
         <el-form-item label="連絡電話" prop="phone" class="phone" :rules="phoneRules">
           <el-input v-model="data.phone" placeholder="連絡電話" />
         </el-form-item>
@@ -62,11 +65,11 @@
         </el-radio-group>
       </el-form-item>
       <el-form-item label="食物禁忌" prop="foodTaboo">
-        <el-input v-model="data.foodTaboo" placeholder="食物禁忌" style="width: 240px;" />
+        <el-input v-model="data.foodTaboo" placeholder="食物禁忌" type="textarea" style="width: 240px;" />
       </el-form-item>
-      <el-form-item label="抬頭" prop="receipt">
+      <!-- <el-form-item label="抬頭" prop="receipt">
         <el-input v-model="data.receipt" placeholder="抬頭" />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item class="category required" label="類別" prop="category" :rules="categoryRules">
         <el-select v-model="data.category">
           <el-option label="MVP" :value="4"></el-option>
@@ -89,7 +92,7 @@ import { Member } from '@/api/member/type';
 import { FormInstance } from 'element-plus';
 import countriesData from '@/assets/data/countries.json'
 
-import { firstNameRules, lastNameRules, countryCodeRules, countryRules, affiliationRules, jobTitleRules, chineseNameRules, passwordRules, categoryRules, emailRules, idCardRules, phoneRules, titleRules, passportRules } from '@/utils/rules'
+import { firstNameRules, lastNameRules, countryCodeRules, countryRules, affiliationRules, jobTitleRules, chineseNameRules, passwordRules, categoryRules, emailRules, idCardRules, phoneRules, titleRules, passportRules, confirrmEmailRules } from '@/utils/rules'
 import { addVipMemberApi } from '@/api/member';
 const countries = ref(countriesData)
 
@@ -101,12 +104,13 @@ const data = ref<Member>({
   lastName: '',
   chineseName: '',
   email: '',
+  confirmEmail: '',
   password: '',
   confirmPassword: '',
   affiliation: '',
   jobTitle: '',
   idCard: '',
-  countryCode: '',
+  countryCode: '886',
   phone: '',
   food: '葷',
   foodTaboo: '',

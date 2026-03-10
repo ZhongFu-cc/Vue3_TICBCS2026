@@ -6,10 +6,14 @@
           <el-input v-model="props.memberData.email" disabled />
         </el-form-item>
 
-        <el-form-item label="稱謂" prop="title" :rules="[{ required: true, message: '請輸入稱謂', trigger: 'blur' }]">
+        <el-form-item label="稱謂" prop="title" :rules="[{ required: false, message: '請輸入稱謂', trigger: 'blur' }]">
           <el-radio-group v-model="updateFormData.title">
             <el-radio v-for="title in titles" :key="title" :label="title" :value="title">{{ title }}</el-radio>
           </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="中文姓名" prop="chineseName">
+          <el-input v-model="updateFormData.chineseName" />
         </el-form-item>
 
         <el-form-item label="英文名字" prop="firstName" :rules="[{ required: true, message: '請輸入英文名字', trigger: 'blur' }]">
@@ -20,13 +24,10 @@
           <el-input v-model="updateFormData.lastName" />
         </el-form-item>
 
-        <el-form-item label="中文姓名" prop="chineseName">
-          <el-input v-model="updateFormData.chineseName" />
-        </el-form-item>
 
-        <el-form-item label="身分證/證照號碼" prop="idCard">
+        <!-- <el-form-item label="身分證/證照號碼" prop="idCard">
           <el-input v-model="updateFormData.idCard" />
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item label="國家" prop="country" :rules="[{ required: true, message: '請輸入國家', trigger: 'blur' }]">
           <el-select v-model="updateFormData.country" filterable>
@@ -48,25 +49,25 @@
           <el-input v-model="updateFormData.phone" />
         </el-form-item>
 
-        <el-form-item label="匯款帳號後五碼" prop="remitAccountLast5">
+        <!-- <el-form-item label="匯款帳號後五碼" prop="remitAccountLast5">
           <el-input v-model="updateFormData.remitAccountLast5" />
         </el-form-item>
 
         <el-form-item label="抬頭" prop="receipt">
           <el-input v-model="updateFormData.receipt" />
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item label="會員類別">
           <el-input v-model="memberEnums[props.memberData.category]" disabled />
         </el-form-item>
 
-        <el-form-item label="補充類別">
+        <!-- <el-form-item label="補充類別">
           <el-input v-model="updateFormData.categoryExtra" />
-        </el-form-item>
+        </el-form-item> -->
 
-        <el-form-item label="註冊費">
+        <!-- <el-form-item label="註冊費">
           <el-input v-model="props.memberData.amount" disabled />
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item label="備註" prop="remark">
           <el-input type="textarea" :rows="4" v-model="updateFormData.remark" />
@@ -92,6 +93,7 @@ const emits = defineEmits(['updateMember']);
 const props = defineProps<{
   memberData: any;
 }>();
+
 
 
 const updateFormRef = ref<FormInstance>();

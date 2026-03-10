@@ -162,7 +162,7 @@ export const adminDynamicRoutes: RouteRecordRaw[] = [
         meta: {
           title: "繳費審核",
           icon: "el-icon-Finished",
-          hidden: false,
+          hidden: true,
           roles: ["ADMIN"],
           keepAlive: true,
         },
@@ -286,7 +286,7 @@ export const adminDynamicRoutes: RouteRecordRaw[] = [
       //affix: true,
       keepAlive: true,
       alwaysShow: false,
-      hidden: false,
+      hidden: true,
     },
     children: [
       {
@@ -326,6 +326,7 @@ export const adminDynamicRoutes: RouteRecordRaw[] = [
       //affix: true,
       keepAlive: true,
       alwaysShow: false,
+      hidden: true,
     },
     children: [
       {

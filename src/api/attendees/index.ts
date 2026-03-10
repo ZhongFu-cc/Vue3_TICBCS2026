@@ -4,7 +4,7 @@ import { AxiosPromise } from "axios";
 export function getAttendeeListByTagAndPaginationApi(
   page: number,
   queryText: string
-): AxiosPromise {
+): AxiosPromise<any> {
   return request({
     url: "/attendees/tag/pagination",
     method: "get",

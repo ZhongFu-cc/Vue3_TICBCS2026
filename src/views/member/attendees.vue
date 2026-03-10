@@ -23,6 +23,11 @@
       <template #data-table>
         <el-table class="news-table" :data="attendeeList.records" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="55" />
+          <el-table-column fixed prop="chineseName" label="中文姓名" :width="isDevice ? '90' : ''">
+            <template #default="scope">
+              <span>{{ scope.row.member.chineseName }}</span>
+            </template>
+          </el-table-column>
           <el-table-column fixed prop="firstName" label="名字" width="90">
             <template #default="scope">
               {{ scope.row.member.firstName }}
@@ -34,11 +39,11 @@
             </template>
           </el-table-column>
 
-          <el-table-column fixed prop="idCard" label="身分證" width="190">
+          <!-- <el-table-column fixed prop="idCard" label="身分證" width="190">
             <template #default="scope">
               {{ scope.row.member.idCard }}
             </template>
-          </el-table-column>
+          </el-table-column> -->
           <el-table-column fixed prop="lastName" label="飲食偏好" width="100">
             <template #default="scope">
               {{ scope.row.member.food }}
@@ -55,18 +60,18 @@
               {{ scope.row.member.phone }}
             </template>
           </el-table-column>
-          <el-table-column prop="tagSet" label="標籤" min-width="40" align="center">
+          <el-table-column prop="tagList" label="標籤" min-width="40" align="center">
             <template #default="scope">
-              <el-popover v-if="scope.row.tagSet.length > 0" placement="left-start" title="標籤" :width="200"
+              <el-popover v-if="scope.row.tagList.length > 0" placement="left-start" title="標籤" :width="200"
                 trigger="hover">
                 <template #reference>
-                  <el-tag v-if="findFirstVaildTag(scope.row.tagSet)" size="large" round
-                    :color="findFirstVaildTag(scope.row.tagSet).color" effect="light">{{
-                      findFirstVaildTag(scope.row.tagSet).name }}</el-tag>
+                  <el-tag v-if="findFirstVaildTag(scope.row.tagList)" size="large" round
+                    :color="findFirstVaildTag(scope.row.tagList).color" effect="light">{{
+                      findFirstVaildTag(scope.row.tagList).name }}</el-tag>
                 </template>
                 <template #default>
                   <div class="tag-popover-box">
-                    <div v-for="tag in scope.row.tagSet" :key="tag.tagId" class="tag-item">
+                    <div v-for="tag in scope.row.tagList" :key="tag.tagId" class="tag-item">
                       <el-tag v-if="tag.status === 0" size="large" round :color="tag.color">{{
                         tag.name }}</el-tag>
                     </div>
@@ -105,6 +110,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 
 import { updateOrdersApi } from '@/api/order'
 import { batchDeleteAttendeesApi, deleteAttendeeApi, downloadAttendeeExcelApi, getAttendeeListByTagAndPaginationApi } from '@/api/attendees'
+import { useAppStore } from '@/store'
 
 
 //獲取路由
@@ -113,6 +119,8 @@ const route = useRoute()
 const router = useRouter()
 //formLabel 寬度
 const formLabelWidth = '140px'
+
+const isDevice = computed(() => useAppStore().device === 'mobile' ? true : false);
 
 
 /**--------------顯示數據相關---------------------------- */
@@ -162,6 +170,7 @@ const getAttendeeList = async () => {
   let res = await getAttendeeListByTagAndPaginationApi(currentPage.value, input.value)
 
   Object.assign(attendeeList, res.data)
+  console.log(res.data)
 }
 
 const findFirstVaildTag = (tagSet: any) => {
