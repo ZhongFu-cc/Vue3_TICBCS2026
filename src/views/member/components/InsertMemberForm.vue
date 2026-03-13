@@ -31,9 +31,9 @@
       <el-form-item label="E-mail" prop="email" :rules="emailRules">
         <el-input v-model="data.email" placeholder="E-mail" />
       </el-form-item>
-      <el-form-item label="確認信箱" prop="confirmEmail" :rules="confirrmEmailRules(data.email)">
+      <!-- <el-form-item label="確認信箱" prop="confirmEmail" :rules="confirrmEmailRules(data.email)">
         <el-input v-model="data.confirmEmail" placeholder="確認信箱" />
-      </el-form-item>
+      </el-form-item> -->
       <!-- <el-form-item label="密碼" prop="password" :rules="passwordRules">
         <el-input v-model="data.password" placeholder="密碼" type="password" />
       </el-form-item>
