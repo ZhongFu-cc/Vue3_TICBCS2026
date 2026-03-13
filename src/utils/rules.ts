@@ -60,6 +60,16 @@ const checkIdCard = (rule: any, value: string, callback: any) => {
   }
 }
 
+const validateConfirmEmail = (email: string) => {
+  return (rule: any, value: string, callback: any) => {
+    if (value !== email) {
+      callback(new Error('確認信箱與E-mail不匹配'));
+    } else {
+      callback();
+    }
+  }
+}
+
 
 /**-------------------------------------------------------------------------- */
 export const firstNameRules = [{ required: true, message: "名字不能為空", trigger: "blur" }];
@@ -86,6 +96,20 @@ export const emailRules = [
     trigger: 'blur',
   },
 ]
+
+export const confirrmEmailRules = (email: string) => {
+  return [
+    {
+      required: true,
+      message: '確認信箱不能為空',
+      trigger: 'blur',
+    },
+    {
+      validator: validateConfirmEmail(email),
+      trigger: 'blur',
+    }
+  ]
+}
 
 export const affiliationRules = [{ required: true, message: "單位名稱不能為空", trigger: "blur" }];
 

@@ -49,7 +49,8 @@ let memberList = reactive<Record<string, any>>({})
 const getMember = async (page: number, size: number) => {
   // let res = await getMemberOrder(page, size, "1", input.value)
   let res = await getUnpaidMemberApi(page, input.value);
-  memberList
+  // memberList
+  console.log(res)
   Object.assign(memberList, res.data)
 }
 
