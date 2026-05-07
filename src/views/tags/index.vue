@@ -283,7 +283,7 @@
 <script lang="ts" setup>
 import BasicComponent from '@/layout/components/Basic/index.vue'
 
-import { addTagApi, assignMemberToTagApi, assignPaperReviewerToTagApi, assignPaperToTagApi, deleteTagApi, findAttendeesIdListByTagIdApi, findMemberIdListByTagIdApi, findPaperIdListByTagIdApi, findPaperReviewerIdListByTagIdApi, getAllTagsApi, getAssociationIdListByTagIdApi, getTagsByPaginationApi, updateTagApi } from '@/api/tag'
+import { addTagApi, assignMemberToTagApi, assignPaperReviewerToTagApi, assignPaperToTagApi, assignTagToAssociated, deleteTagApi, findAttendeesIdListByTagIdApi, findMemberIdListByTagIdApi, findPaperIdListByTagIdApi, findPaperReviewerIdListByTagIdApi, getAllTagsApi, getAssociationIdListByTagIdApi, getTagsByPaginationApi, updateTagApi } from '@/api/tag'
 import { getMemberByPaginationApi, fetchMembersWithPaginationAndStatusApi } from '@/api/member'
 import type { FormInstance, FormRules } from 'element-plus'
 import { typeEnums } from '@/enums/TypeEnum'
@@ -713,9 +713,9 @@ const submitTagSet = async () => {
     case 'member':
       data = {
         tagId: assignTag.tagId,
-        targetMemberIdList: Array.from(allMemberIdHasSet)
+        targetAssociatedIdList: Array.from(allMemberIdHasSet)
       }
-      const { res: memberRes, error: memberError } = await tryCatch(assignMemberToTagApi(data));
+      const { res: memberRes, error: memberError } = await tryCatch(assignTagToAssociated(data));
       if (memberError) {
         ElMessage.error('更新失敗: ' + memberError.message)
         return;
@@ -725,9 +725,9 @@ const submitTagSet = async () => {
     case 'attendees':
       data = {
         tagId: assignTag.tagId,
-        targetAttendeesIdList: Array.from(attendeeIdSet)
+        targetAssociatedIdList: Array.from(attendeeIdSet)
       }
-      const { res: attendeeRes, error: attendeeError } = await tryCatch(assignTagToAttendeeApi(data));
+      const { res: attendeeRes, error: attendeeError } = await tryCatch(assignTagToAssociated(data));
       if (attendeeError) {
         ElMessage.error('更新失敗: ' + attendeeError.message)
         return;
@@ -737,9 +737,9 @@ const submitTagSet = async () => {
     case 'paper':
       data = {
         tagId: assignTag.tagId,
-        targetPaperIdList: Array.from(paperIdSet)
+        targetAssociatedIdList: Array.from(paperIdSet)
       }
-      const { res: paperRes, error: paperError } = await tryCatch(assignPaperToTagApi(data));
+      const { res: paperRes, error: paperError } = await tryCatch(assignTagToAssociated(data));
       if (paperError) {
         ElMessage.error('更新失敗: ' + paperError.message)
         return;
@@ -749,9 +749,9 @@ const submitTagSet = async () => {
     case 'paperReviewer':
       data = {
         tagId: assignTag.tagId,
-        targetPaperReviewerIdList: Array.from(paperReviewerIdSet)
+        targetAssociatedIdList: Array.from(paperReviewerIdSet)
       }
-      const { res: paperReviewerRes, error: paperReviewerError } = await tryCatch(assignPaperReviewerToTagApi(data));
+      const { res: paperReviewerRes, error: paperReviewerError } = await tryCatch(assignTagToAssociated(data));
       if (paperReviewerError) {
         ElMessage.error('更新失敗: ' + paperReviewerError.message)
         return;

@@ -72,7 +72,7 @@
             </div>
           </div>
 
-          <el-form-item class="education-label" :label="`教育背景${index + 1}:`"
+          <el-form-item class="education-label" :label="`教育背景${Number(index) + 1}:`"
             v-for="(item, index) in addFormData.educationalBackground" prop="`educationalBackground`">
             <div class="text-area-item-box">
               <el-input v-model="addFormData.educationalBackground[index]" type="textarea"></el-input>
@@ -83,7 +83,7 @@
           </el-form-item>
 
           <el-divider></el-divider>
-          <el-form-item class="workExperience-label" :label="`工作經驗${index + 1}:`"
+          <el-form-item class="workExperience-label" :label="`工作經驗${Number(index) + 1}:`"
             v-for="(item, index) in addFormData.workExperience" :prop="`workExperience+${index}`">
             <div class="text-area-item-box">
               <el-input v-model="addFormData.workExperience[index]" type="textarea"></el-input>
@@ -158,7 +158,7 @@
               </el-form-item>
             </div>
           </div>
-          <el-form-item class="education-label" :label="`教育背景${index + 1}:`"
+          <el-form-item class="education-label" :label="`教育背景${Number(index) + 1}:`"
             v-for="(item, index) in editForm.educationalBackground" :prop="`educationalBackground+${index}`">
             <div class="text-area-item-box">
               <el-input v-model="editForm.educationalBackground[index]" type="textarea"></el-input>
@@ -168,7 +168,7 @@
             </div>
           </el-form-item>
           <el-divider></el-divider>
-          <el-form-item class="workExperience-label" :label="`工作經驗${index + 1}:`"
+          <el-form-item class="workExperience-label" :label="`工作經驗${Number(index) + 1}:`"
             v-for="(item, index) in editForm.workExperience" prop="workExperience">
             <div class="text-area-item-box">
               <el-input v-model="editForm.workExperience[index]" type="textarea"></el-input>
@@ -178,7 +178,7 @@
             </div>
           </el-form-item>
           <el-divider></el-divider>
-          <el-form-item class="publication-label" :label="`發表作品${index + 1}:`"
+          <el-form-item class="publication-label" :label="`發表作品${Number(index) + 1}:`"
             v-for="(item, index) in editForm.publication" prop="publication">
             <div class="text-area-item-box">
               <el-input v-model="editForm.publication[index]" type="textarea"></el-input>
@@ -188,7 +188,7 @@
             </div>
           </el-form-item>
           <el-divider></el-divider>
-          <el-form-item class="award-label" :label="`得獎經歷${index + 1}:`" v-for="(item, index) in editForm.award"
+          <el-form-item class="award-label" :label="`得獎經歷${Number(index) + 1}:`" v-for="(item, index) in editForm.award"
             prop="award">
             <div class="text-area-item-box">
               <el-input v-model="editForm.award[index]" type="textarea"></el-input>

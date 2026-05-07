@@ -118,10 +118,27 @@ const getDataAndEditorLoaded = async () => {
           name: '通訊作者信箱',
           value: '{{correspondingAuthorEmail}}',
         },
-        correspondingAuthorAffiliation: {
-          name: '通訊作者所屬單位',
-          value: '{{correspondingAuthorAffiliation}}',
+        publicationNumber: {
+          name: '發表編號',
+          value: '{{publicationNumber}}',
         },
+        publicationGroup: {
+          name: '發表組別',
+          value: '{{publicationGroup}}',
+        },
+        reportLocation: {
+          name: '報告地點',
+          value: '{{reportLocation}}',
+        },
+        reportTime: {
+          name: '報告時間',
+          value: '{{reportTime}}',
+        },
+        presentationType: {
+          name: '報告方式',
+          value: '{{presentationType}}',
+        },
+
       }
       break;
     case 'all':
@@ -191,7 +208,19 @@ const getDataAndEditorLoaded = async () => {
           value: '{{password}}',
         }
       }
+      break;
+    case 'attendee':
+      mergeTags = {
+        name: {
+          name: '與會者姓名',
+          value: '{{name}}',
+        },
+        QRcode: {
+          name: '與會者QR碼',
+          value: '{{QRcode}}',
+        },
 
+      }
 
   }
 
@@ -199,6 +228,11 @@ const getDataAndEditorLoaded = async () => {
   emailEditor.value.editor.addEventListener('editor:ready', function () {
 
     emailEditor.value.editor.setMergeTags(mergeTags);
+    console.log(mergeTags)
+
+    emailEditor.value.editor.setBodyValues({
+      contentWidth: "650px"          // 這裡要寫固定寬度，如果是 100% 就會變全寬
+    });
 
     isDisabled.value = false;
   });
@@ -230,6 +264,7 @@ const emailEditor = ref()
 
 const emailOptions = {
   locale: 'zh-TW',
+  displayMode: 'email' as const
 }
 
 
@@ -302,6 +337,7 @@ const save = async () => {
         },
         {
           minify: true, // 压缩 HTML 大小
+          inlineStyles: true
         }
       );
     });

@@ -85,6 +85,7 @@ const settingsStore = useSettingsStore();
 // Internationalization
 const { t } = useI18n();
 
+
 // Reactive states
 const isDark = ref(settingsStore.theme === ThemeEnum.DARK);
 const icpVisible = ref(true);
@@ -133,15 +134,40 @@ const loginRules = computed(() => {
  */
 const route = useRoute();
 
+const stage = ref<string>(route.params.stage as string);
+const setLocalStorageStage = (value: string) => {
+  console.log("Setting stage in localStorage:", value);
+  localStorage.setItem("stage", value);
+};
+
+watch(stage, (newStage) => {
+  setLocalStorageStage(newStage);
+}, { immediate: true }
+);
+
+
+
+
 function handleLogin() {
   loginFormRef.value.validate((valid: boolean) => {
+    console.log(loginData.verificationCode)
+    console.log(loginData.verificationKey)
     if (valid) {
       loading.value = true;
       userStore
         .reviewerLogin(loginData)
         .then(() => {
-          const query: LocationQuery = route.query;
-          const redirect = (query.redirect as LocationQueryValue) ?? "/";
+          const query = route.query;
+          const redirectRaw = (query.redirect as string) ?? "/";
+
+          // 1. 拆解 redirect 字串，防止裡面帶有 ?stage=2 這種參數
+          const [path, queryString] = redirectRaw.split('?');
+
+          // 2. 將 redirect 內的參數轉換成物件
+          const redirectParams = new URLSearchParams(queryString).entries();
+          const redirectQueryObj = Object.fromEntries(redirectParams);
+
+          // 3. 獲取當前頁面頂層的其他參數 (排除 redirect)
           const otherQueryParams = Object.keys(query).reduce(
             (acc: any, cur: string) => {
               if (cur !== "redirect") {
@@ -151,10 +177,18 @@ function handleLogin() {
             },
             {}
           );
-          router.push('/dashboard');
-          // router.push({ path: redirect, query: otherQueryParams });
+
+          // 4. 合併所有參數
+          // 優先級：原路徑裡的參數 < 當前 URL 頂層的參數
+          const finalQuery = { ...redirectQueryObj, ...otherQueryParams };
+
+          router.push({
+            path: path,
+            query: finalQuery
+          });
         })
         .catch((err) => {
+          console.error(err);
         })
         .finally(() => {
           loading.value = false;
@@ -204,6 +238,8 @@ const getCaptcha = async () => {
 
   captchaImage.value = res.data.image;
   loginData.verificationKey = res.data.key;
+
+  console.log(loginData.verificationKey)
 }
 
 

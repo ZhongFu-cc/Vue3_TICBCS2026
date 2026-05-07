@@ -64,6 +64,7 @@ const { title, totalCount, currentCount } = toRefs(props);
     align-items: center;
 
     .total-count {
+      text-wrap-mode: nowrap;
       font-size: 1rem;
       margin-right: 16px;
     }

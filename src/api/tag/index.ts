@@ -105,3 +105,12 @@ export function findPaperReviewerIdListByTagIdApi(tagId: string): AxiosPromise {
     method: "get",
   });
 }
+
+export function assignTagToAssociated(data: any): AxiosPromise {
+  return request({
+    url: `/tag/associated`,
+    method: "put",
+    data,
+  });
+}
+

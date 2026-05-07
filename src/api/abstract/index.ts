@@ -68,9 +68,24 @@ export function downloadPaperScoreExcelApi(reviewStage: string): AxiosPromise<an
   });
 }
 
-export function getDownloadPaperFileUrlApi(): AxiosPromise<any> {
+export function getDownloadAbstractsUrlApi(): AxiosPromise<any> {
   return request({
     url: "/paper/download/get-download-abstracts-url",
     method: "post",
+  });
+}
+
+export function getDownloadSlidesUrlApi(): AxiosPromise<any> {
+  return request({
+    url: "/paper/download/get-download-slides-url",
+    method: "post",
+  });
+}
+
+export function importPaperScoreExcelApi(formData: FormData): AxiosPromise<any> {
+  return request({
+    url: "/paper/import-excel-update",
+    method: "post",
+    data: formData,
   });
 }

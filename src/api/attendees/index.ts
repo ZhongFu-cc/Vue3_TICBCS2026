@@ -46,3 +46,13 @@ export function downloadAttendeeExcelApi(): AxiosPromise {
     responseType: "arraybuffer",
   });
 }
+
+export function importExcelApi(formData: FormData): AxiosPromise<any> {
+  return request({
+    url: "/attendees/import-excel-update",
+    method: "post",
+    data: formData,
+  });
+}
+
+

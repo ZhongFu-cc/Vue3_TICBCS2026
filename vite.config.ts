@@ -55,6 +55,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     server: {
       // 允许IP访问
       host: "0.0.0.0",
+      allowedHosts: [
+        'd4cd-1-168-51-184.ngrok-free.app' // 將報錯的域名填入這裡
+      ],
       // 应用端口 (默認:3000)
       port: Number(env.VITE_APP_PORT),
       // 运行是否自动打开浏览器

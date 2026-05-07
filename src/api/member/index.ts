@@ -211,6 +211,7 @@ export function assignTagsToMember(data: any): AxiosPromise {
 
 export function getUnpaidMemberApi(
   page: number,
+  country: string,
   queryText: string
 ): AxiosPromise {
   return request({
@@ -219,7 +220,9 @@ export function getUnpaidMemberApi(
     params: {
       page: page,
       size: 10,
+      country: country,
       queryText: queryText,
+
     },
   });
 }

@@ -4,13 +4,18 @@
     <BasicComponent title="繳費確認管理" :totalCount="memberList.total + '人'">
       <template #search-box>
         <div class="search-bar">
-          <el-input v-model="input" style="width: 240px" placeholder="輸入內容,Enter查詢"
+          <el-input v-model="input" style="width: 300px" placeholder="輸入內容,Enter查詢"
             @input="getMember(currentPage, 10)" />
+
+          <el-select v-model="country" class="filter-status" placeholder="請選擇" @change="getMember(currentPage, 10)">
+            <el-option v-for="country in countryOptions" :label="country.label" :value="country.value" />
+          </el-select>
         </div>
       </template>
 
       <template #data-table>
-        <MemberTable :member-data="memberList.records" view-page="review" @update-unpaid-member="updateUnpaidMember">
+        <MemberTable v-if="memberList.records" :member-data="memberList.records" view-page="review"
+          @update-unpaid-member="updateUnpaidMember">
         </MemberTable>
       </template>
 
@@ -40,6 +45,13 @@ let memberCount = ref(0)
 
 //查詢內容
 let input = ref('')
+//查詢國家
+let country = ref('Taiwan')
+
+let countryOptions = ref([
+  { label: '台灣', value: 'Taiwan' },
+  { label: '外國', value: 'Foreign' },
+])
 
 
 //獲取未審核的同意書List
@@ -48,8 +60,7 @@ let memberList = reactive<Record<string, any>>({})
 
 const getMember = async (page: number, size: number) => {
   // let res = await getMemberOrder(page, size, "1", input.value)
-  let res = await getUnpaidMemberApi(page, input.value);
-  memberList
+  let res = await getUnpaidMemberApi(page, country.value, input.value);
   Object.assign(memberList, res.data)
 }
 
@@ -123,6 +134,9 @@ onMounted(() => {
 }
 
 .search-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   margin-left: 1%;
 }
 

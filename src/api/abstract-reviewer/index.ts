@@ -12,6 +12,18 @@ export function getPaperReviewerPageApi(page: number, size: number) {
   });
 }
 
+export function getReviewStatsApi(reviewStage: string) {
+  return request({
+    url: "paper-reviewer/review/stats",
+    method: "get",
+    params: {
+      reviewStage: reviewStage,
+    },
+  });
+}
+
+
+
 export function addPaperReviewerApi(data: any) {
   return request({
     url: "/paper-reviewer",

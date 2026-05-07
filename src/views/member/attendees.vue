@@ -10,6 +10,11 @@
               <Delete />
             </el-icon>
           </el-button>
+
+          <el-button type="success" @click="importExcelDialogState.openDialog()">
+            Excel批量更新
+          </el-button>
+
           <el-button type="success" @click="downloadExcel">
             下載Excel
           </el-button>
@@ -55,18 +60,18 @@
               {{ scope.row.member.phone }}
             </template>
           </el-table-column>
-          <el-table-column prop="tagSet" label="標籤" min-width="40" align="center">
+          <el-table-column prop="tagList" label="標籤" min-width="40" align="center">
             <template #default="scope">
-              <el-popover v-if="scope.row.tagSet.length > 0" placement="left-start" title="標籤" :width="200"
+              <el-popover v-if="scope.row.tagList.length > 0" placement="left-start" title="標籤" :width="200"
                 trigger="hover">
                 <template #reference>
-                  <el-tag v-if="findFirstVaildTag(scope.row.tagSet)" size="large" round
-                    :color="findFirstVaildTag(scope.row.tagSet).color" effect="light">{{
-                      findFirstVaildTag(scope.row.tagSet).name }}</el-tag>
+                  <el-tag v-if="findFirstVaildTag(scope.row.tagList)" size="large" round
+                    :color="findFirstVaildTag(scope.row.tagList).color" effect="light">{{
+                      findFirstVaildTag(scope.row.tagList).name }}</el-tag>
                 </template>
                 <template #default>
                   <div class="tag-popover-box">
-                    <div v-for="tag in scope.row.tagSet" :key="tag.tagId" class="tag-item">
+                    <div v-for="tag in scope.row.tagList" :key="tag.tagId" class="tag-item">
                       <el-tag v-if="tag.status === 0" size="large" round :color="tag.color">{{
                         tag.name }}</el-tag>
                     </div>
@@ -92,6 +97,55 @@
       </template>
     </BasicComponent>
   </div>
+
+  <!-- Excel批量更新對話框 -->
+  <el-dialog v-model="importExcelDialogState.isOpen" title="匯入 Excel 檔案">
+    <div class="template-tips-content">
+      <ul class="step-list" style="list-style-type: decimal;">
+        <li>匯入與會者excel進行更新</li>
+        <li>注意事項:
+          <ul class="sub-list">
+            <li>只允許「收據編號」欄位更新，其餘欄位無效</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="upload-excel-content">
+      <el-upload ref="uploadRef" drag class="upload-demo" :limit="1" :on-change="handleUpload" :auto-upload="false"
+        :on-remove="handleRemove">
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">
+          Drop file here or <em>click to upload</em>
+        </div>
+      </el-upload>
+    </div>
+    <span slot="footer" class="dialog-footer">
+      <el-button type="danger" plain @click="importExcelDialogState.closeDialog()">取消</el-button>
+      <el-button type="success" plain @click="handleImportExcel">確定</el-button>
+    </span>
+  </el-dialog>
+
+  <el-dialog v-model="importExcelResultDialogState.isOpen" title="匯入結果" width="30%">
+    <div v-if="importExcelResultDialogState.resultData">
+      <p>總共 {{ importExcelResultDialogState.resultData.totalCount }} 條數據</p>
+      <p>成功 {{ importExcelResultDialogState.resultData.successCount }} 條</p>
+      <p>失敗 {{ importExcelResultDialogState.resultData.failCount }} 條</p>
+      <div v-if="importExcelResultDialogState.resultData.failCount > 0">
+        <h3>失敗詳情：</h3>
+        <ul>
+          <li v-for="(fail, index) in importExcelResultDialogState.resultData.failList" :key="index">
+            行 {{ fail.rows }}: {{ fail.message }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <span slot="footer" class="dialog-footer">
+      <el-button type="primary" plain @click="importExcelResultDialogState.closeDialog()">確定</el-button>
+    </span>
+
+  </el-dialog>
+
+
 </template>
 
 <script setup lang='ts'>
@@ -100,11 +154,10 @@ import BasicComponent from '@/layout/components/Basic/index.vue'
 
 import { ref, reactive } from 'vue'
 import { Delete, Plus } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
-
+import type { FormInstance, FormRules, UploadProps, UploadUserFile } from 'element-plus'
 
 import { updateOrdersApi } from '@/api/order'
-import { batchDeleteAttendeesApi, deleteAttendeeApi, downloadAttendeeExcelApi, getAttendeeListByTagAndPaginationApi } from '@/api/attendees'
+import { batchDeleteAttendeesApi, deleteAttendeeApi, downloadAttendeeExcelApi, getAttendeeListByTagAndPaginationApi, importExcelApi } from '@/api/attendees'
 
 
 //獲取路由
@@ -160,14 +213,13 @@ const attendeeList = reactive<any>([])
 
 const getAttendeeList = async () => {
   let res = await getAttendeeListByTagAndPaginationApi(currentPage.value, input.value)
-
   Object.assign(attendeeList, res.data)
 }
 
-const findFirstVaildTag = (tagSet: any) => {
-  for (let i = 0; i < tagSet.length; i++) {
-    if (tagSet[i].status === 0) {
-      return tagSet[i];
+const findFirstVaildTag = (tagList: any) => {
+  for (let i = 0; i < tagList.length; i++) {
+    if (tagList[i].status === 0) {
+      return tagList[i];
     }
   }
   return '';
@@ -232,8 +284,87 @@ const downloadExcel = async () => {
   }
 }
 
+/**------------------- Excel 批量更新 ----------------------- */
+const importExcelDialogState = ref({
+  isOpen: false,
+  openDialog: () => {
+    importExcelDialogState.value.isOpen = true;
+  },
+  closeDialog: () => {
+    importExcelDialogState.value.isOpen = false;
+  }
+})
 
 
+interface ImportResult {
+  failCount: number;
+  failList: Array<{ rows: number, message: string }>;
+  successCount: number;
+  totalCount: number;
+}
+
+const importExcelResultDialogState = ref({
+  isOpen: false,
+  resultData: null as ImportResult | null,
+  openDialog: (data: any) => {
+    console.log('Import result data:', data);
+    importExcelResultDialogState.value.resultData = data;
+    importExcelResultDialogState.value.isOpen = true;
+  },
+  closeDialog: () => {
+    importExcelResultDialogState.value.isOpen = false;
+    importExcelResultDialogState.value.resultData = null;
+    getAttendeeList();
+    importExcelDialogState.value.closeDialog();
+
+  }
+})
+
+const uploadRef = ref();
+const uploadFileList = ref<any>([]);
+const handleUpload: UploadProps['onChange'] = (file: UploadUserFile, uploadFiles) => {
+  if (file.size == 0) {
+    ElMessage.error('File is empty');
+    return false;
+  }
+
+  if (file.status === 'ready' && file.size) {
+    if (file.name.split('.').pop() !== 'xlsx' && file.name.split('.').pop() !== 'xls') {
+      ElMessage.error('File must be xlsx');
+      uploadFiles.pop();
+      return;
+    }
+    uploadFileList.value.push(file);
+  }
+}
+
+const handleRemove: UploadProps['onRemove'] = (file, fileList) => {
+  uploadFileList.value = fileList;
+}
+
+
+
+const handleImportExcel = async () => {
+  try {
+    const data = new FormData();
+    uploadFileList.value.forEach((file: any) => {
+      data.append('file', file.raw);
+    });
+    let res = await importExcelApi(data);
+    ElMessage.success("上傳成功");
+    importExcelResultDialogState.value.openDialog(res.data);
+    // getPaperList();
+    // importExcelDialogState.value.closeDialog();
+    // 清空組件內的文件列表
+    uploadRef.value?.clearFiles();
+    // 清空實際儲存的文件列表
+    uploadFileList.value = [];
+    console.log(res);
+  } catch (error) {
+    console.log(error);
+    ElMessage.error("上傳失敗" + error)
+  }
+}
 
 
 

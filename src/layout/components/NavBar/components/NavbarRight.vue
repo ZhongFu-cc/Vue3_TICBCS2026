@@ -107,6 +107,7 @@ function reviewerLogout() {
       })
       .then(() => {
         router.push(`/reviewer-login?redirect=${route.fullPath}`);
+        console.log(route.fullPath)
       });
   });
 }

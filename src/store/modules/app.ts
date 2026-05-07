@@ -26,11 +26,6 @@ export const useAppStore = defineStore("app", () => {
    */
   const locale = computed(() => {
     return en;
-    // if (language?.value == "en") {
-    //   return en;
-    // } else {
-    //   return zhCn;
-    // }
   });
 
   // actions

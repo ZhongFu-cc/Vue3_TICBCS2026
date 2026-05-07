@@ -97,7 +97,7 @@ export const useUserStore = defineStore("user", () => {
           localStorage.removeItem("Authorization");
           localStorage.removeItem("Authorization-paper-reviewer");
           localStorage.setItem("paper-reviewer-logout", "true");
-          location.reload(); // 清空路由
+          // location.reload(); // 清空路由
           resolve();
         })
         .catch((error) => {

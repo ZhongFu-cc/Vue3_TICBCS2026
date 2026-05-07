@@ -43,9 +43,9 @@
       <el-form-item label="職稱" prop="jobTitle" :rules="jobTitleRules">
         <el-input v-model="data.jobTitle" placeholder="職稱" />
       </el-form-item>
-      <el-form-item label="身份證字號/護照號碼" prop="idCard" :rules="data.country === 'Taiwan' ? idCardRules : passportRules">
+      <!-- <el-form-item label="身份證字號/護照號碼" prop="idCard" :rules="data.country === 'Taiwan' ? idCardRules : passportRules">
         <el-input v-model="data.idCard" placeholder="身份證字號/護照號碼" />
-      </el-form-item>
+      </el-form-item> -->
       <div class="phone-section">
         <el-form-item label="國碼" prop="countryCode" class="country-code" :rules="countryCodeRules">
           <el-input v-model="data.countryCode" />

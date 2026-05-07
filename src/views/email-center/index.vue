@@ -163,8 +163,8 @@ const deleteRow = (id: number): void => {
     type: 'warning'
   }).then(async () => {
     // 用户選擇確認，繼續操作
-    // await deleteEmailTemplateApi(id)
-    // getEmailTemplateByPagination(currentPage.value, 10)
+    await deleteEmailTemplateApi(id)
+    getEmailTemplateByPagination(currentPage.value, 10)
 
     ElMessage.success('刪除成功');
   }).catch((err) => {
@@ -182,8 +182,8 @@ const deleteList = () => {
       //確定刪除後使用父組件傳來的function
       //提取idList
       let deleteIdList = deleteSelectList.map((item: { emailTemplateId: string }) => item.emailTemplateId)
-      // await batchDeleteEmailTemplateApi(deleteIdList)
-      // getEmailTemplateByPagination(currentPage.value, 10)
+      await batchDeleteEmailTemplateApi(deleteIdList)
+      getEmailTemplateByPagination(currentPage.value, 10)
       ElMessage.success('刪除成功');
     }).catch((err) => {
     })
@@ -236,6 +236,7 @@ const submitInsertForm = (form: FormInstance | undefined) => {
         //呼叫父組件給的新增function API
         let res = await addEmailTemplateApi(insertEmailTemplateFormData)
         ElMessage.success('新增成功');
+        console.log(res.data)
         router.push(`${route.fullPath}/${res.data}`)
 
       } catch (err: any) {

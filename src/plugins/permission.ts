@@ -24,7 +24,7 @@ export async function setupPermission() {
     const permissionStore = usePermissionStore();
 
     if (!hasToken) {
-      if (whiteList.includes(to.path)) {
+      if (whiteList.some(path => to.path.startsWith(path))) {
         next();
       } else {
         // 不在白名單且沒有token
@@ -129,3 +129,6 @@ async function initializeRoutes() {
     isAddingRoutes = false;
   }
 }
+
+// Authorization
+// Bearer 5a151e77-bf5d-4422-80a8-1960716060e0

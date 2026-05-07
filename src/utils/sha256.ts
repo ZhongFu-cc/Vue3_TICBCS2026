@@ -190,7 +190,7 @@ export async function slideUpload(
   } else {
     percentage.value = 100;
     let baseUrl = import.meta.env.VITE_MINIO_API_URL;
-    let url = `${baseUrl}/ticbcs2026/${checkResult.data.path}`;
+    let url = `${baseUrl}/topbs2026/${checkResult.data.path}`;
     window.open(url, "_blank");
   }
 }
