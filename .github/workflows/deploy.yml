@@ -5,11 +5,15 @@ on:
     branches: 
       - '**'
   workflow_dispatch: #
-  
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Checkout repository
         uses: actions/checkout@v6
     
